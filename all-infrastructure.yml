@@ -199,58 +199,22 @@ services:
         image: dremio/dremio-oss
         volumes:
             - ./apps:/opt/dremio-apps
-        environment:
-            CONF: “is_coordinator”
-            EXECTUORS : "dremio_executor_1,dremio_executor_2"
         ports:
-            - "9047:9047"
-            - "31010:31010"
-            
+            - “9047:9047”
+            - “31010:31010”
+            - “32010:32010”
+            - “45678:45678”   
         depends_on:
             - mssql
-  dremio_executor_1:
-        container_name: dremio-executor-1
-        image: dremio/dremio-oss
-        volumes:
-            - ./apps:/opt/dremio-apps
-        environment:
-            CONF: “is_executor"
-            ID: "1"
-        ports:
-            - "32010:32010"
-            
-        depends_on:
-            - dremio_coordinator
-  dremio_executor_2:
-        container_name: dremio-executor-2
-        image: dremio/dremio-oss
-        volumes:
-            - ./apps:/opt/dremio-apps
-        environment:
-            CONF: “is_executor"
-            ID: "2"
-        ports:
-            - "45678:45678"
-        depends_on:
-            - dremio_coordinator
 
   localstack:
-    container_name: "${LOCALSTACK_DOCKER_NAME-localstack_main}"
-    image: localstack/localstack
-    network_mode: bridge
-    ports:
-      - "127.0.0.1:53:53"                # only required for Pro (DNS)
-      - "127.0.0.1:53:53/udp"            # only required for Pro (DNS)
-      - "127.0.0.1:443:443"              # only required for Pro (LocalStack HTTPS Edge Proxy)
-      - "127.0.0.1:4510-4559:4510-4559"  # external service port range
-      - "127.0.0.1:4566:4566"            # LocalStack Edge Proxy
-    environment:
-      - DEBUG=${DEBUG-}
-      - DATA_DIR=${DATA_DIR-}
-      - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR-}
-      - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY-}  # only required for Pro
-      - HOST_TMP_FOLDER=${TMPDIR:-/tmp/}localstack
-      - DOCKER_HOST=unix:///var/run/docker.sock
-    volumes:
-      - "${TMPDIR:-/tmp}/localstack:/tmp/localstack"
+    image: localstack/localstack:latest
+    environment: 
+      - AWS_DEFAULT_REGION=us-east-1
+      - EDGE_PORT=4566
+      - SERVICES=s3
+    ports: 
+      - '4566-4583:4566-4583'
+    volumes: 
+      - "${TEMPDIR:-/tmp/localstack}:/tmp/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
