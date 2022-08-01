@@ -30,34 +30,11 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_JMX_PORT: 9999
-      KAFKA_JMX_HOSTNAME: 192.168.1.111
+      KAFKA_JMX_HOSTNAME: 192.168.1.149
       KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
     depends_on:
       - zoo1
-  
-  control-center:
-    image: confluentinc/cp-enterprise-control-center:latest
-    hostname: control-center
-    container_name: control-center
-    depends_on: 
-    - kafka1
-    ports:
-    - "9021:9021"
-    environment:
-      CONTROL_CENTER_BOOTSTRAP_SERVERS: "kafka1:9092"
-      CONTROL_CENTER_REPLICATION_FACTOR: 1
-
-  kafdrop:
-    image:  obsidiandynamics/kafdrop
-    ports:
-    - "9000:9000" 
-    depends_on: 
-    - kafka1
-    environment:
-      KAFKA_BROKERCONNECT: "kafka1:19092"
-      JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
-       
 
   kafka-schema-registry:
     image: confluentinc/cp-schema-registry:7.1.1
@@ -105,9 +82,11 @@ services:
       CONNECT_CONFIG_STORAGE_TOPIC: docker-connect-configs
       CONNECT_OFFSET_STORAGE_TOPIC: docker-connect-offsets
       CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
-      CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      #CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_KEY_CONVERTER:  io.confluent.connect.json.JsonSchemaConverter
       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: 'http://kafka-schema-registry:8081'
-      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      #CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER:  io.confluent.connect.json.JsonSchemaConverter
       CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: 'http://kafka-schema-registry:8081'
       CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
@@ -145,7 +124,6 @@ services:
       KSQL_BOOTSTRAP_SERVERS: PLAINTEXT://kafka1:19092
       KSQL_LISTENERS: http://0.0.0.0:8088/
       KSQL_KSQL_SERVICE_ID: ksqldb-server
-      KSQL_KSQL_SCHEMA_REGISTRY_URL: "http://kafka-schema-registry:8081"
     depends_on:
       - zoo1
       - kafka1
@@ -214,10 +192,16 @@ services:
     image: mcr.microsoft.com/mssql/server:2017-latest
     ports:
       - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql/data
+      - mssql_log:/var/opt/mssql/log
+      - mssql_backup:/var/opt/mssql/backup
     environment:
-      SA_PASSWORD: Pass@word
-      ACCEPT_EULA: "Y"
-      
+      - SA_PASSWORD=Pass@word
+      - ACCEPT_EULA="Y"
+      - MSSQL_DATA_DIR=/var/opt/mssql/data
+      - MSSQL_LOG_DIR=/var/opt/mssql/log
+      - MSSQL_BACKUP_DIR=/var/opt/mssql/backup
   dremio:
         container_name: dremio
         image: dremio/dremio-oss
@@ -242,3 +226,7 @@ services:
     volumes: 
       - "${TEMPDIR:-/tmp/localstack}:/tmp/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+volumes:
+  mssql_data:
+  mssql_log:
+  mssql_backup:

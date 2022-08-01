@@ -1,0 +1,24 @@
+
+{
+          "namespace": "io.confluent.examples.clients.basicavro",
+          "type": "record",
+          "name": "Course",
+          "fields": [
+            {
+              "name": "CourseID",
+              "type": "int"
+            },
+            {
+              "name": "Title",
+              "type": "string"
+            },
+            {
+              "name": "Credits",
+              "type": "int"
+            },
+            {
+              "name": "DepartmentID",
+              "type": "int"
+            }
+          ]
+        }
